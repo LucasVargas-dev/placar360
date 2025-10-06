@@ -37,15 +37,46 @@ export class AuthService {
   async register(email: string, password: string, name?: string) {
     const hashedPassword = await bcrypt.hash(password, 10);
     
-    const user = await this.prisma.user.create({
-      data: {
-        email,
-        password: hashedPassword,
-        name,
-      },
+    // Get default role (Player role)
+    const defaultRole = await this.prisma.role.findFirst({
+      where: { name: 'Player' },
     });
 
-    const { password: _, ...result } = user;
-    return result;
+    if (!defaultRole) {
+      throw new Error('Default role not found. Please seed the database with roles.');
+    }
+
+    // Create person name with timestamp to avoid conflicts
+    const personName = name || `${email.split('@')[0]}_${Date.now()}`;
+
+    // Use transaction to ensure data consistency
+    const result = await this.prisma.$transaction(async (tx) => {
+      // Create person record
+      const person = await tx.person.create({
+        data: {
+          name: personName,
+        },
+      });
+
+      // Create user record
+      const user = await tx.user.create({
+        data: {
+          email,
+          password: hashedPassword,
+          cpf: '', // Adding required cpf field
+          personId: person.id,
+          roleId: defaultRole.id,
+        },
+        include: {
+          person: true,
+          role: true,
+        },
+      });
+
+      return user;
+    });
+
+    const { password: _, ...userResult } = result;
+    return userResult;
   }
 }

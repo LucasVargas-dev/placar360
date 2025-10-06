@@ -1,5 +1,4 @@
-import React from 'react'
-import logotipo from '../assets/logotipo-1-placar360.png'
+import logotipo from '../assets/logo-placar360.jpeg'
 
 interface LogoProps {
   size?: 'small' | 'medium' | 'large'

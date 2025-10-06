@@ -7,17 +7,149 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  url      = "postgres://postgres:postgres@localhost:5432/placar360"
 }
 
-// Modelo básico de usuário para autenticação
+model Person {
+  id        Int      @id @default(autoincrement())
+  name      String
+  createdAt DateTime @default(now()) 
+  updatedAt DateTime @default(now()) 
+  deletedAt DateTime? 
+
+  user User?
+
+  @@map("person")
+}
+
+
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  password  String
-  name      String?
+  id        String   @id @default(cuid()) 
+  code      String?  
+  email     String   @unique 
+  cpf       String?  
+  password  String?  
+  phone     String?  
+  avatarUrl String?  
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+  
+  personId  Int @unique
+  roleId    Int
 
-  @@map("users")
+  person Person @relation(fields: [personId], references: [id])
+  role   Role   @relation(fields: [roleId], references: [id])
+
+  @@map("user")
+}
+
+model Role {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+
+  users       User[]
+  permissions RolePermission[]
+
+  @@map("role")
+}
+
+model Permission {
+  id          Int      @id @default(autoincrement())
+  resource    String   // What the permission applies to (screen, club, tournament, etc.)
+  action      String   // What action is allowed (view, create, edit, delete, manage)
+  description String?  // Human readable description
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now())
+  deletedAt   DateTime?
+
+  // Relations
+  roles RolePermission[]
+
+  @@unique([resource, action])
+  @@map("permission")
+}
+
+model RolePermission {
+  roleId       Int
+  permissionId Int
+
+  role       Role       @relation(fields: [roleId], references: [id])
+  permission Permission @relation(fields: [permissionId], references: [id])
+
+  @@id([roleId, permissionId])
+  @@map("role_has_permission")
+}
+
+model Club {
+  id          String    @id @default(cuid())
+  createdBy   String?   @map("created_by")
+  name        String
+  slug        String?
+  description String?
+  phone       String?
+  email       String?
+  addressLine String?   @map("address_line")
+  city        String?
+  state       String?
+  timezone    String?   @default("UTC")
+  openTime    String?   @map("open_time")
+  closeTime   String?   @map("close_time")
+  isActive    Boolean   @default(true) @map("is_active")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  // Relations
+  courts Court[]
+
+  @@map("clubs")
+}
+
+model Court {
+  id                  String    @id @default(cuid())
+  clubId              String    @map("club_id")
+  name                String
+  sportType           String    @default("padel") @map("sport_type")
+  surface             String?
+  defaultSlotMinutes  Int        @default(60) @map("default_slot_minutes")
+  hourlyRate          Decimal?  @map("hourly_rate") @db.Decimal(10, 2)
+  isActive            Boolean   @default(true) @map("is_active")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+  deletedAt           DateTime? @map("deleted_at")
+
+  // Relations
+  club Club @relation(fields: [clubId], references: [id])
+
+  @@map("courts")
+}
+
+model State {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  uf        String   @unique @db.VarChar(2) // State abbreviation (SP, RJ, etc.)
+  region    String   @db.VarChar(20) // Region (Norte, Nordeste, etc.)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  cities City[]
+
+  @@map("states")
+}
+
+model City {
+  id        Int      @id @default(autoincrement())
+  name      String
+  stateId   Int      @map("state_id")
+  ibgeCode  String?  @map("ibge_code") @db.VarChar(7) // IBGE city code
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  state State @relation(fields: [stateId], references: [id])
+
+  @@unique([name, stateId])
+  @@map("cities")
 }
