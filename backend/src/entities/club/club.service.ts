@@ -23,7 +23,6 @@ export class ClubService {
       data: {
         createdBy: createClubDto.createdBy,
         name: createClubDto.name,
-        slug: createClubDto.slug,
         description: createClubDto.description,
         phone: createClubDto.phone,
         email: createClubDto.email,
@@ -92,22 +91,6 @@ export class ClubService {
     }
 
     return club;
-  }
-
-  async findBySlug(slug: string) {
-    return this.prisma.club.findFirst({
-      where: {
-        slug,
-        deletedAt: null,
-      },
-      include: {
-        courts: {
-          where: {
-            deletedAt: null,
-          },
-        },
-      },
-    });
   }
 
   async update(id: string, updateClubDto: UpdateClubDto) {

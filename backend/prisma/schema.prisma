@@ -85,7 +85,6 @@ model Club {
   id          String    @id @default(cuid())
   createdBy   String?   @map("created_by")
   name        String
-  slug        String?
   description String?
   phone       String?
   email       String?

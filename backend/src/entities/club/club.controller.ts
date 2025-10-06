@@ -30,11 +30,6 @@ export class ClubController {
     return this.clubService.findOne(id);
   }
 
-  @Get('slug/:slug')
-  findBySlug(@Param('slug') slug: string) {
-    return this.clubService.findBySlug(slug);
-  }
-
   @Get(':id/courts')
   getCourts(@Param('id') id: string) {
     return this.clubService.getCourts(id);

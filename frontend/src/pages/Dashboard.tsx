@@ -1,7 +1,7 @@
 import { Layout } from '../components/Layout';
 import { colors } from '../styles/colors';
 
-export function Dashboard() {
+export default function Dashboard() {
   return (
     <Layout>
       <div style={{
