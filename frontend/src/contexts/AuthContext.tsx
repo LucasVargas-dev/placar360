@@ -1,10 +1,16 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 import { api } from '../services/api'
 
+interface UserRole {
+  id: number
+  name: string
+}
+
 interface User {
   id: string
   email: string
   name?: string
+  roles?: UserRole[]
 }
 
 interface AuthContextType {
@@ -41,7 +47,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const { access_token, user: userData } = response.data
       
       localStorage.setItem('token', access_token)
-      // localStorage.setItem('user', JSON.stringify(userData))
+      localStorage.setItem('user', JSON.stringify(userData))
       setUser(userData)
     } catch (error) {
       throw error

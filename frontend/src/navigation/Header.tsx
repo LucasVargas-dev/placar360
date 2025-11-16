@@ -15,7 +15,7 @@ export function Header() {
     { name: 'Torneios', path: '/tournaments' },
     { name: 'Clubes', path: '/clubs' },
     { name: 'Agenda', path: '/club-schedule' },
-    { name: 'Sobre', path: '/about' },
+    { name: 'Aulas', path: '/lessons' },
   ]
 
   const userDisplayName =

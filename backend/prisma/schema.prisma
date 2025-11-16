@@ -31,7 +31,6 @@ model User {
   updatedAt               DateTime                 @updatedAt
   deletedAt               DateTime?
   personId                Int                      @unique
-  roleId                  Int
   bookingsAsTeacher       Booking[]                @relation("BookingTeacher")
   bookings                Booking[]
   notifications           Notification[]
@@ -39,15 +38,15 @@ model User {
   tournaments             Tournament[]             @relation("TournamentOrganizer")
   tournamentParticipants  TournamentParticipant[]
   person                  Person                   @relation(fields: [personId], references: [id])
-  role                    Role                     @relation(fields: [roleId], references: [id])
   userClubs               UserClub[]
+  userHasRoles            UserHasRole[]
 }
 
 model Role {
   id          Int              @id @default(autoincrement())
   name        String           @unique
   permissions RolePermission[]
-  users       User[]
+  userHasRoles UserHasRole[]
 }
 
 model Permission {
@@ -70,6 +69,18 @@ model RolePermission {
   role         Role       @relation(fields: [roleId], references: [id])
 
   @@id([roleId, permissionId])
+}
+
+model UserHasRole {
+  userId       String
+  roleId       Int
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  deletedAt    DateTime?
+  user         User      @relation(fields: [userId], references: [id])
+  role         Role      @relation(fields: [roleId], references: [id])
+
+  @@id([userId, roleId])
 }
 
 model Club {

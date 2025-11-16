@@ -10,7 +10,7 @@ export const CreateUserSchema = z.object({
   phone: z.string().optional(),
   avatarUrl: z.string().url('Invalid URL format').optional(),
   personId: z.number().int().positive('Person ID must be a positive integer'),
-  roleId: z.number().int().positive('Role ID must be a positive integer'),
+  roleIds: z.array(z.number().int().positive('Role ID must be a positive integer')).optional(),
 });
 
 export const UpdateUserSchema = z.object({
@@ -19,7 +19,7 @@ export const UpdateUserSchema = z.object({
   cpf: z.string().optional(),
   phone: z.string().optional(),
   avatarUrl: z.string().url('Invalid URL format').optional(),
-  roleId: z.number().int().positive('Role ID must be a positive integer').optional(),
+  roleIds: z.array(z.number().int().positive('Role ID must be a positive integer')).optional(),
 });
 
 export const UserResponseSchema = z.object({
@@ -33,15 +33,14 @@ export const UserResponseSchema = z.object({
   updatedAt: z.date(),
   deletedAt: z.date().nullable(),
   personId: z.number(),
-  roleId: z.number(),
   person: z.object({
     id: z.number(),
     name: z.string(),
   }).optional(),
-  role: z.object({
+  roles: z.array(z.object({
     id: z.number(),
     name: z.string(),
-  }).optional(),
+  })).optional(),
 });
 
 // Types

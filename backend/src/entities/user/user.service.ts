@@ -74,11 +74,18 @@ export class UserService extends DefaultService<
 			where: { email },
 			include: {
 				person: true,
-				role: {
+				userHasRoles: {
+					where: {
+						deletedAt: null,
+					},
 					include: {
-						permissions: {
+						role: {
 							include: {
-								permission: true,
+								permissions: {
+									include: {
+										permission: true,
+									},
+								},
 							},
 						},
 					},

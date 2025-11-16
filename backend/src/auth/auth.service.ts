@@ -15,6 +15,14 @@ export class AuthService {
       where: { email },
       include: {
         person: true,
+        userHasRoles: {
+          where: {
+            deletedAt: null,
+          },
+          include: {
+            role: true,
+          },
+        },
       },
     });
 
@@ -32,12 +40,18 @@ export class AuthService {
 
   async login(user: any) {
     const payload = { email: user.email, sub: user.id };
+    const roles = user.userHasRoles?.map((uhr: any) => ({
+      id: uhr.role.id,
+      name: uhr.role.name,
+    })) || [];
+    
     return {
       access_token: this.jwtService.sign(payload),
       user: {
         id: user.id,
         email: user.email,
         name: user.person?.name ?? user.name ?? null,
+        roles,
       },
     };
   }
@@ -73,11 +87,19 @@ export class AuthService {
           password: hashedPassword,
           cpf: '', // Adding required cpf field
           personId: person.id,
-          roleId: defaultRole.id,
+          userHasRoles: {
+            create: {
+              roleId: defaultRole.id,
+            },
+          },
         },
         include: {
           person: true,
-          role: true,
+          userHasRoles: {
+            include: {
+              role: true,
+            },
+          },
         },
       });
 

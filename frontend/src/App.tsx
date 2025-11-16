@@ -12,6 +12,7 @@ import ClubSchedule from './pages/ClubSchedule'
 import Tournaments from './pages/Tournaments'
 import TournamentCreate from './pages/TournamentCreate'
 import TournamentDetails from './pages/TournamentDetails'
+import Lessons from './pages/Lessons'
 
 function App() {
   return (
@@ -63,6 +64,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <ClubSchedule />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/lessons"
+            element={
+              <ProtectedRoute>
+                <Lessons />
               </ProtectedRoute>
             }
           />
