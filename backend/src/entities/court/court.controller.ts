@@ -1,50 +1,41 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Delete,
-} from '@nestjs/common';
+import { Controller, Get, Param } from '@nestjs/common';
 import { CourtService } from './court.service';
-import { CreateCourtDto, UpdateCourtDto, CreateCourtSchema, UpdateCourtSchema } from './court.model';
-import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
+import { CreateCourtSchema, UpdateCourtSchema, CreateCourtDto, UpdateCourtDto } from './court.model';
+import DefaultController from '../../../packages/default.controller.js';
+import { CourtEntity } from './court.orm.js';
+import { ZodSchema } from 'zod';
 
 @Controller('courts')
-export class CourtController {
-  constructor(private readonly courtService: CourtService) {}
+export class CourtController extends DefaultController<
+	CourtEntity,
+	CreateCourtDto,
+	UpdateCourtDto
+> {
+	constructor(private readonly courtService: CourtService) {
+		super(courtService);
+	}
 
-  @Post()
-  create(@Body(new ZodValidationPipe(CreateCourtSchema)) createCourtDto: CreateCourtDto) {
-    return this.courtService.create(createCourtDto);
-  }
+	/**
+	 * Custom endpoint to get courts for a specific club
+	 */
+	@Get('club/:clubId')
+	async getCourtsByClub(@Param('clubId') clubId: string) {
+		return await this.service.getAllByConditions({
+			where: { clubId } as any,
+		});
+	}
 
-  @Get()
-  findAll() {
-    return this.courtService.findAll();
-  }
+	/**
+	 * The zod create schema
+	 */
+	protected createSchema(): ZodSchema {
+		return CreateCourtSchema;
+	}
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.courtService.findOne(id);
-  }
-
-  @Get('club/:clubId')
-  findByClub(@Param('clubId') clubId: string) {
-    return this.courtService.findByClub(clubId);
-  }
-
-  @Patch(':id')
-  update(
-    @Param('id') id: string,
-    @Body(new ZodValidationPipe(UpdateCourtSchema)) updateCourtDto: UpdateCourtDto,
-  ) {
-    return this.courtService.update(id, updateCourtDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.courtService.remove(id);
-  }
+	/**
+	 * The zod update schema
+	 */
+	protected updateSchema(): ZodSchema {
+		return UpdateCourtSchema;
+	}
 }

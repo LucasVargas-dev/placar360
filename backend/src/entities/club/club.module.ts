@@ -1,12 +1,12 @@
 import { Module } from '@nestjs/common';
 import { ClubService } from './club.service';
 import { ClubController } from './club.controller';
-import { PrismaModule } from '../../prisma/prisma.module';
+import { ClubORM } from './club.orm';
+import { ClubQueryService } from './club.query.service';
 
 @Module({
-  imports: [PrismaModule],
   controllers: [ClubController],
-  providers: [ClubService],
+  providers: [ClubORM, ClubQueryService, ClubService],
   exports: [ClubService],
 })
 export class ClubModule {}

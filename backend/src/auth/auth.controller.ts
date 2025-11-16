@@ -1,18 +1,24 @@
-import { Controller, Post, Body, UseGuards, Request } from '@nestjs/common';
+import { Body, Controller, Post, UnauthorizedException } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { LocalAuthGuard } from './guards/local-auth.guard';
-import { ZodValidation } from '../common/decorators/zod-validation.decorator';
+// import { LocalAuthGuard } from './guards/localAuth.guard';
+import { ZodValidation } from '../../packages/common/decorators/zod-validation.decorator';
 import { LoginSchema, RegisterSchema, LoginDto, RegisterDto } from './schemas/auth.schemas';
 
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
 
-  @UseGuards(LocalAuthGuard)
+  // @UseGuards(LocalAuthGuard)
   @Post('login')
   @ZodValidation(LoginSchema)
-  async login(@Body() body: LoginDto, @Request() req) {
-    return this.authService.login(req.user);
+  async login(@Body() body: LoginDto) {
+    const user = await this.authService.validateUser(body.email, body.password);
+
+    if (!user) {
+      throw new UnauthorizedException('Credenciais inválidas');
+    }
+
+    return this.authService.login(user);
   }
 
   @Post('register')

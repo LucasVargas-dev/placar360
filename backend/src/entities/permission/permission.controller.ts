@@ -10,7 +10,7 @@ import {
 } from '@nestjs/common';
 import { PermissionService } from './permission.service';
 import { CreatePermissionDto, UpdatePermissionDto, CreatePermissionSchema, UpdatePermissionSchema } from './permission.model';
-import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
+import { ZodValidationPipe } from '../../../packages/common/pipes/zod-validation.pipe';
 
 @Controller('permissions')
 export class PermissionController {

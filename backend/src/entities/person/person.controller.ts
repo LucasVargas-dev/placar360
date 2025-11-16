@@ -1,46 +1,31 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Delete,
-  ParseIntPipe,
-} from '@nestjs/common';
+import { Controller } from '@nestjs/common';
 import { PersonService } from './person.service';
-import { CreatePersonDto, UpdatePersonDto, CreatePersonSchema, UpdatePersonSchema } from './person.model';
-import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
+import { CreatePersonSchema, UpdatePersonSchema, CreatePersonDto, UpdatePersonDto } from './person.model';
+import DefaultController from '../../../packages/default.controller.js';
+import { PersonEntity } from './person.orm.js';
+import { ZodSchema } from 'zod';
 
-@Controller('persons')
-export class PersonController {
-  constructor(private readonly personService: PersonService) {}
+@Controller('people')
+export class PersonController extends DefaultController<
+	PersonEntity,
+	CreatePersonDto,
+	UpdatePersonDto
+> {
+	constructor(private readonly personService: PersonService) {
+		super(personService);
+	}
 
-  @Post()
-  create(@Body(new ZodValidationPipe(CreatePersonSchema)) createPersonDto: CreatePersonDto) {
-    return this.personService.create(createPersonDto);
-  }
+	/**
+	 * The zod create schema
+	 */
+	protected createSchema(): ZodSchema {
+		return CreatePersonSchema;
+	}
 
-  @Get()
-  findAll() {
-    return this.personService.findAll();
-  }
-
-  @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.personService.findOne(id);
-  }
-
-  @Patch(':id')
-  update(
-    @Param('id', ParseIntPipe) id: number,
-    @Body(new ZodValidationPipe(UpdatePersonSchema)) updatePersonDto: UpdatePersonDto,
-  ) {
-    return this.personService.update(id, updatePersonDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id', ParseIntPipe) id: number) {
-    return this.personService.remove(id);
-  }
+	/**
+	 * The zod update schema
+	 */
+	protected updateSchema(): ZodSchema {
+		return UpdatePersonSchema;
+	}
 }

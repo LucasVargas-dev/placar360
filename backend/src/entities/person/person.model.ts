@@ -2,11 +2,11 @@ import { z } from 'zod';
 
 // Create Person Schema
 export const CreatePersonSchema = z.object({
-  name: z.string().min(1, 'Name is required').max(45, 'Name must be less than 45 characters'),
+  name: z.string().min(1, 'Name is required'),
 });
 
 export const UpdatePersonSchema = z.object({
-  name: z.string().min(1, 'Name is required').max(45, 'Name must be less than 45 characters').optional(),
+  name: z.string().min(1, 'Name is required').optional(),
 });
 
 export const PersonResponseSchema = z.object({

@@ -1,63 +1,86 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Param,
-  Delete,
-  ParseIntPipe,
-} from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete } from '@nestjs/common';
 import { RolePermissionService } from './rolePermission.service';
-import { CreateRolePermissionDto, CreateRolePermissionSchema } from './rolePermission.model';
-import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
+import { CreateRolePermissionSchema, CreateRolePermissionDto } from './rolePermission.model';
+import DefaultController from '../../../packages/default.controller.js';
+import { RolePermissionEntity } from './rolePermission.orm.js';
+import { ZodSchema } from 'zod';
+import { ZodValidationPipe } from '../../../packages/common/pipes/zod-validation.pipe';
 
 @Controller('role-permissions')
-export class RolePermissionController {
-  constructor(private readonly rolePermissionService: RolePermissionService) {}
+export class RolePermissionController extends DefaultController<
+	RolePermissionEntity,
+	CreateRolePermissionDto,
+	CreateRolePermissionDto
+> {
+	constructor(private readonly rolePermissionService: RolePermissionService) {
+		super(rolePermissionService);
+	}
 
-  @Post()
-  create(@Body(new ZodValidationPipe(CreateRolePermissionSchema)) createRolePermissionDto: CreateRolePermissionDto) {
-    return this.rolePermissionService.create(createRolePermissionDto);
-  }
+	/**
+	 * Custom endpoint to get role permissions by role
+	 */
+	@Get('role/:roleId')
+	async findByRole(@Param('roleId') roleId: string) {
+		return await this.rolePermissionService.findByRole(Number(roleId));
+	}
 
-  @Get()
-  findAll() {
-    return this.rolePermissionService.findAll();
-  }
+	/**
+	 * Custom endpoint to get role permissions by permission
+	 */
+	@Get('permission/:permissionId')
+	async findByPermission(@Param('permissionId') permissionId: string) {
+		return await this.rolePermissionService.findByPermission(Number(permissionId));
+	}
 
-  @Get('role/:roleId')
-  findByRole(@Param('roleId', ParseIntPipe) roleId: number) {
-    return this.rolePermissionService.findByRole(roleId);
-  }
+	/**
+	 * Custom endpoint to get a specific role permission
+	 */
+	@Get('role/:roleId/permission/:permissionId')
+	async findOne(
+		@Param('roleId') roleId: string,
+		@Param('permissionId') permissionId: string,
+	) {
+		return await this.rolePermissionService.findOne(Number(roleId), Number(permissionId));
+	}
 
-  @Get('permission/:permissionId')
-  findByPermission(@Param('permissionId', ParseIntPipe) permissionId: number) {
-    return this.rolePermissionService.findByPermission(permissionId);
-  }
+	/**
+	 * Custom endpoint to delete a role permission
+	 */
+	@Delete('role/:roleId/permission/:permissionId')
+	async remove(
+		@Param('roleId') roleId: string,
+		@Param('permissionId') permissionId: string,
+	) {
+		return await this.rolePermissionService.remove(Number(roleId), Number(permissionId));
+	}
 
-  @Get('role/:roleId/permission/:permissionId')
-  findOne(
-    @Param('roleId', ParseIntPipe) roleId: number,
-    @Param('permissionId', ParseIntPipe) permissionId: number,
-  ) {
-    return this.rolePermissionService.findOne(roleId, permissionId);
-  }
+	/**
+	 * Custom endpoint to delete all role permissions for a role
+	 */
+	@Delete('role/:roleId')
+	async removeByRole(@Param('roleId') roleId: string) {
+		return await this.rolePermissionService.removeByRole(Number(roleId));
+	}
 
-  @Delete('role/:roleId/permission/:permissionId')
-  remove(
-    @Param('roleId', ParseIntPipe) roleId: number,
-    @Param('permissionId', ParseIntPipe) permissionId: number,
-  ) {
-    return this.rolePermissionService.remove(roleId, permissionId);
-  }
+	/**
+	 * Custom endpoint to delete all role permissions for a permission
+	 */
+	@Delete('permission/:permissionId')
+	async removeByPermission(@Param('permissionId') permissionId: string) {
+		return await this.rolePermissionService.removeByPermission(Number(permissionId));
+	}
 
-  @Delete('role/:roleId')
-  removeByRole(@Param('roleId', ParseIntPipe) roleId: number) {
-    return this.rolePermissionService.removeByRole(roleId);
-  }
+	/**
+	 * The zod create schema
+	 */
+	protected createSchema(): ZodSchema {
+		return CreateRolePermissionSchema;
+	}
 
-  @Delete('permission/:permissionId')
-  removeByPermission(@Param('permissionId', ParseIntPipe) permissionId: number) {
-    return this.rolePermissionService.removeByPermission(permissionId);
-  }
+	/**
+	 * The zod update schema (same as create for rolePermission)
+	 */
+	protected updateSchema(): ZodSchema {
+		return CreateRolePermissionSchema;
+	}
 }

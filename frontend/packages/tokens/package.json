@@ -1,0 +1,23 @@
+{
+	"name": "@packages/tokens",
+	"version": "1.0.0",
+	"type": "module",
+	"private": true,
+	"main": "dist/index.js",
+	"license": "MIT",
+	"publishConfig": {
+		"access": "public"
+	},
+	"scripts": {
+		"build": "tsc"
+	},
+	"devDependencies": {},
+	"lint-staged": {
+		"**/*.{js,ts,jsx,tsx}": [
+			"eslint --fix"
+		],
+		"*.json": [
+			"prettier --write"
+		]
+	}
+}

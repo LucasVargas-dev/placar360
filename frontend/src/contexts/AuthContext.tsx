@@ -23,10 +23,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const token = localStorage.getItem('token')
-    if (token) {
-      // Aqui você pode validar o token ou buscar dados do usuário
-      // Por enquanto, vamos apenas verificar se existe
-      setUser({ id: '1', email: 'user@example.com' }) // Mock
+    const storedUser = localStorage.getItem('user')
+    if (token && storedUser) {
+      try {
+        setUser(JSON.parse(storedUser))
+      } catch (error) {
+        localStorage.removeItem('token')
+        localStorage.removeItem('user')
+      }
     }
     setLoading(false)
   }, [])
@@ -37,6 +41,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const { access_token, user: userData } = response.data
       
       localStorage.setItem('token', access_token)
+      // localStorage.setItem('user', JSON.stringify(userData))
       setUser(userData)
     } catch (error) {
       throw error
@@ -53,6 +58,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = () => {
     localStorage.removeItem('token')
+    localStorage.removeItem('user')
     setUser(null)
   }
 

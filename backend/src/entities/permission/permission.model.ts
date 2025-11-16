@@ -2,15 +2,15 @@ import { z } from 'zod';
 
 // Create Permission Schema
 export const CreatePermissionSchema = z.object({
-  resource: z.string().min(1, 'Resource is required').max(50, 'Resource must be less than 50 characters'),
-  action: z.string().min(1, 'Action is required').max(50, 'Action must be less than 50 characters'),
-  description: z.string().max(255, 'Description must be less than 255 characters').optional(),
+  resource: z.string(),
+  action: z.string(),
+  description: z.string().optional(),
 });
 
 export const UpdatePermissionSchema = z.object({
-  resource: z.string().min(1, 'Resource is required').max(50, 'Resource must be less than 50 characters').optional(),
-  action: z.string().min(1, 'Action is required').max(50, 'Action must be less than 50 characters').optional(),
-  description: z.string().max(255, 'Description must be less than 255 characters').optional(),
+  resource: z.string().optional(),
+  action: z.string().optional(),
+  description: z.string().optional(),
 });
 
 export const PermissionResponseSchema = z.object({

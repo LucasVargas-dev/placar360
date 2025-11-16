@@ -1,69 +1,71 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
+import { Injectable, NotFoundException, ConflictException, Inject } from '@nestjs/common';
+import DefaultService from '../../../packages/default.service.js';
+import { RolePermissionEntity, RolePermissionORM } from './rolePermission.orm.js';
 import { CreateRolePermissionDto } from './rolePermission.model';
+import { RolePermissionQueryService } from './rolePermission.query.service.js';
+import { PrismaService } from '../../prisma/prisma.service.js';
 
 @Injectable()
-export class RolePermissionService {
-  constructor(private prisma: PrismaService) {}
+export class RolePermissionService extends DefaultService<
+	RolePermissionEntity,
+	CreateRolePermissionDto,
+	CreateRolePermissionDto
+> {
+	constructor(
+		orm: RolePermissionORM,
+		queryService: RolePermissionQueryService,
+		@Inject(PrismaService) private readonly prisma: PrismaService
+	) {
+		super(orm, queryService);
+	}
 
-  async create(createRolePermissionDto: CreateRolePermissionDto) {
-    // Check if role exists
-    const role = await this.prisma.role.findUnique({
-      where: { id: createRolePermissionDto.roleId },
-    });
+	/**
+	 * Validates if the data is valid for the role permission
+	 */
+	protected async validateEntity(
+		data: CreateRolePermissionDto,
+		id?: number | string
+	): Promise<void> {
+		// Check if role exists
+		const role = await this.prisma.role.findUnique({
+			where: { id: data.roleId },
+		});
 
-    if (!role) {
-      throw new NotFoundException(`Role with ID ${createRolePermissionDto.roleId} not found`);
-    }
+		if (!role) {
+			throw new NotFoundException(`Role with ID ${data.roleId} not found`);
+		}
 
-    // Check if permission exists
-    const permission = await this.prisma.permission.findUnique({
-      where: { id: createRolePermissionDto.permissionId },
-    });
+		// Check if permission exists
+		const permission = await this.prisma.permission.findUnique({
+			where: { id: data.permissionId },
+		});
 
-    if (!permission) {
-      throw new NotFoundException(`Permission with ID ${createRolePermissionDto.permissionId} not found`);
-    }
+		if (!permission) {
+			throw new NotFoundException(`Permission with ID ${data.permissionId} not found`);
+		}
 
-    // Check if role-permission already exists
-    const existingRolePermission = await this.prisma.rolePermission.findUnique({
-      where: {
-        roleId_permissionId: {
-          roleId: createRolePermissionDto.roleId,
-          permissionId: createRolePermissionDto.permissionId,
-        },
-      },
-    });
+		// Check if role-permission already exists
+		const existingRolePermission = await this.prisma.rolePermission.findUnique({
+			where: {
+				roleId_permissionId: {
+					roleId: data.roleId,
+					permissionId: data.permissionId,
+				},
+			},
+		});
 
-    if (existingRolePermission) {
-      throw new ConflictException('Role-permission assignment already exists');
-    }
+		if (existingRolePermission) {
+			throw new ConflictException('Role-permission assignment already exists');
+		}
+	}
 
-    return this.prisma.rolePermission.create({
-      data: {
-        roleId: createRolePermissionDto.roleId,
-        permissionId: createRolePermissionDto.permissionId,
-      },
-      include: {
-        role: true,
-        permission: true,
-      },
-    });
-  }
-
-  async findAll() {
-    return this.prisma.rolePermission.findMany({
-      include: {
-        role: true,
-        permission: true,
-      },
-      orderBy: [
-        { role: { name: 'asc' } },
-        { permission: { resource: 'asc' } },
-        { permission: { action: 'asc' } },
-      ],
-    });
-  }
+	/**
+	 * Validates if the id is valid for the role permission
+	 * Note: RolePermission uses composite key, so this method may not be called directly
+	 */
+	protected async validateId(id: number | string): Promise<void> {
+		// Not applicable for composite key entities
+	}
 
   async findByRole(roleId: number) {
     return this.prisma.rolePermission.findMany({

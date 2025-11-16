@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -11,144 +8,320 @@ datasource db {
 }
 
 model Person {
-  id        Int      @id @default(autoincrement())
+  id        Int       @id @default(autoincrement())
   name      String
-  createdAt DateTime @default(now()) 
-  updatedAt DateTime @default(now()) 
-  deletedAt DateTime? 
-
-  user User?
-
-  @@map("person")
+  email     String?   @unique
+  phone     String?
+  cpf       String?   @unique
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @default(now())
+  deletedAt DateTime?
+  user      User?
 }
 
-
 model User {
-  id        String   @id @default(cuid()) 
-  code      String?  
-  email     String   @unique 
-  cpf       String?  
-  password  String?  
-  phone     String?  
-  avatarUrl String?  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  deletedAt DateTime?
-  
-  personId  Int @unique
-  roleId    Int
-
-  person Person @relation(fields: [personId], references: [id])
-  role   Role   @relation(fields: [roleId], references: [id])
-
-  @@map("user")
+  id                      String                   @id @default(cuid())
+  code                    String?
+  email                   String                   @unique
+  cpf                     String?
+  password                String?
+  phone                   String?
+  avatarUrl               String?
+  createdAt               DateTime                 @default(now())
+  updatedAt               DateTime                 @updatedAt
+  deletedAt               DateTime?
+  personId                Int                      @unique
+  roleId                  Int
+  bookingsAsTeacher       Booking[]                @relation("BookingTeacher")
+  bookings                Booking[]
+  notifications           Notification[]
+  notificationPreferences NotificationPreferences?
+  tournaments             Tournament[]             @relation("TournamentOrganizer")
+  tournamentParticipants  TournamentParticipant[]
+  person                  Person                   @relation(fields: [personId], references: [id])
+  role                    Role                     @relation(fields: [roleId], references: [id])
+  userClubs               UserClub[]
 }
 
 model Role {
-  id          Int      @id @default(autoincrement())
-  name        String   @unique
-
-  users       User[]
+  id          Int              @id @default(autoincrement())
+  name        String           @unique
   permissions RolePermission[]
-
-  @@map("role")
+  users       User[]
 }
 
 model Permission {
-  id          Int      @id @default(autoincrement())
-  resource    String   // What the permission applies to (screen, club, tournament, etc.)
-  action      String   // What action is allowed (view, create, edit, delete, manage)
-  description String?  // Human readable description
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @default(now())
+  id          Int              @id @default(autoincrement())
+  resource    String
+  action      String
+  description String?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @default(now())
   deletedAt   DateTime?
-
-  // Relations
-  roles RolePermission[]
+  roles       RolePermission[]
 
   @@unique([resource, action])
-  @@map("permission")
 }
 
 model RolePermission {
   roleId       Int
   permissionId Int
-
-  role       Role       @relation(fields: [roleId], references: [id])
-  permission Permission @relation(fields: [permissionId], references: [id])
+  permission   Permission @relation(fields: [permissionId], references: [id])
+  role         Role       @relation(fields: [roleId], references: [id])
 
   @@id([roleId, permissionId])
-  @@map("role_has_permission")
 }
 
 model Club {
-  id          String    @id @default(cuid())
-  createdBy   String?   @map("created_by")
-  name        String
-  description String?
-  phone       String?
-  email       String?
-  addressLine String?   @map("address_line")
-  city        String?
-  state       String?
-  timezone    String?   @default("UTC")
-  openTime    String?   @map("open_time")
-  closeTime   String?   @map("close_time")
-  isActive    Boolean   @default(true) @map("is_active")
-  createdAt   DateTime  @default(now()) @map("created_at")
-  updatedAt   DateTime  @updatedAt @map("updated_at")
-  deletedAt   DateTime? @map("deleted_at")
-
-  // Relations
-  courts Court[]
-
-  @@map("clubs")
+  id           String        @id @default(cuid())
+  createdBy    String?
+  name         String
+  description  String?
+  phone        String?
+  email        String?
+  addressLine  String?
+  city         String?
+  state        String?
+  timezone     String?       @default("UTC")
+  openTime     String?
+  closeTime    String?
+  isActive     Boolean       @default(true)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  deletedAt    DateTime?
+  courts       Court[]
+  pricingRules PricingRule[]
+  clubHasTournaments ClubHasTournament[]
+  userClubs    UserClub[]
 }
 
 model Court {
-  id                  String    @id @default(cuid())
-  clubId              String    @map("club_id")
-  name                String
-  sportType           String    @default("padel") @map("sport_type")
-  surface             String?
-  defaultSlotMinutes  Int        @default(60) @map("default_slot_minutes")
-  hourlyRate          Decimal?  @map("hourly_rate") @db.Decimal(10, 2)
-  isActive            Boolean   @default(true) @map("is_active")
-  createdAt           DateTime  @default(now()) @map("created_at")
-  updatedAt           DateTime  @updatedAt @map("updated_at")
-  deletedAt           DateTime? @map("deleted_at")
-
-  // Relations
-  club Club @relation(fields: [clubId], references: [id])
-
-  @@map("courts")
+  id                 String        @id @default(cuid())
+  clubId             String
+  name               String
+  sportType          String
+  surface            String?
+  defaultSlotMinutes Int
+  hourlyRate         Decimal?
+  isActive           Boolean       @default(true)
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  deletedAt          DateTime?
+  bookings           Booking[]
+  club               Club          @relation(fields: [clubId], references: [id])
+  pricingRules       PricingRule[]
 }
 
 model State {
   id        Int      @id @default(autoincrement())
   name      String   @unique
-  uf        String   @unique @db.VarChar(2) // State abbreviation (SP, RJ, etc.)
-  region    String   @db.VarChar(20) // Region (Norte, Nordeste, etc.)
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  // Relations
-  cities City[]
-
-  @@map("states")
+  uf        String   @unique
+  region    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  cities    City[]
 }
 
 model City {
   id        Int      @id @default(autoincrement())
   name      String
-  stateId   Int      @map("state_id")
-  ibgeCode  String?  @map("ibge_code") @db.VarChar(7) // IBGE city code
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  // Relations
-  state State @relation(fields: [stateId], references: [id])
+  stateId   Int
+  ibgeCode  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  state     State    @relation(fields: [stateId], references: [id])
 
   @@unique([name, stateId])
-  @@map("cities")
+  tournaments Tournament[]
+}
+
+model Booking {
+  id               String         @id @default(cuid())
+  courtId          String
+  userId           String
+  type             String
+  startTime        DateTime
+  endTime          DateTime
+  status           String
+  totalAmount      Decimal?
+  recurringPattern Int?
+  recurringEndDate DateTime?
+  blockoutReason   String?
+  notes            String?
+  tournamentId     String?
+  teacherId        String?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  deletedAt        DateTime?
+  court            Court          @relation(fields: [courtId], references: [id])
+  teacher          User?          @relation("BookingTeacher", fields: [teacherId], references: [id])
+  tournament       Tournament?    @relation(fields: [tournamentId], references: [id])
+  user             User           @relation(fields: [userId], references: [id])
+  notifications    Notification[]
+  tournamentMatch  TournamentMatch? @relation("BookingMatch")
+}
+
+model PricingRule {
+  id        String    @id @default(cuid())
+  clubId    String
+  courtId   String?
+  name      String
+  dayOfWeek Int
+  startTime Int
+  endTime   Int
+  price     Decimal
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  club      Club      @relation(fields: [clubId], references: [id])
+  court     Court?    @relation(fields: [courtId], references: [id])
+}
+
+model ClubHasTournament {
+  clubId       String
+  tournamentId String
+  club         Club      @relation(fields: [clubId], references: [id])
+  tournament   Tournament @relation(fields: [tournamentId], references: [id])
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  deletedAt    DateTime?
+
+  @@id([clubId, tournamentId])
+}
+
+model Tournament {
+  id                String                  @id @default(cuid())
+  cityId            Int?
+  organizerId       String
+  name              String
+  description       String?
+  sportType         String
+  startDate         DateTime
+  endDate           DateTime
+  registrationStart DateTime
+  registrationEnd   DateTime
+  maxParticipants   Int?
+  status            String
+  prizes            String?
+  format            String                  @default("knockout")
+  entryFee          Decimal?                @db.Decimal(10, 2)
+  isActive          Boolean                 @default(true)
+  createdAt         DateTime                @default(now())
+  updatedAt         DateTime                @updatedAt
+  deletedAt         DateTime?
+  bookings          Booking[]
+  notifications     Notification[]
+  city              City?                   @relation(fields: [cityId], references: [id])
+  organizer         User                    @relation("TournamentOrganizer", fields: [organizerId], references: [id])
+  participants      TournamentParticipant[]
+  matches           TournamentMatch[]
+
+  clubHasTournaments ClubHasTournament[]
+}
+
+model TournamentParticipant {
+  id           String     @id @default(cuid())
+  tournamentId String
+  userId       String
+  registeredAt DateTime   @default(now())
+  status       String
+  tournament   Tournament @relation(fields: [tournamentId], references: [id])
+  user         User       @relation(fields: [userId], references: [id])
+  matchEntries TournamentMatchParticipant[]
+
+  @@unique([tournamentId, userId])
+}
+
+model TournamentMatch {
+  id                   String                       @id @default(cuid())
+  tournamentId         String
+  bookingId            String?                      @unique
+  round                String
+  roundOrder           Int
+  stageType            String
+  groupName            String?
+  modality             String?
+  matchFormat          String?
+  status               String                       @default("scheduled")
+  scheduledAt          DateTime?
+  winnerParticipantId  String?
+  scoreSummary         String?
+  format               String?
+  createdAt            DateTime                     @default(now())
+  updatedAt            DateTime                     @updatedAt
+  deletedAt            DateTime?
+  tournament           Tournament                   @relation(fields: [tournamentId], references: [id])
+  booking              Booking?                     @relation("BookingMatch", fields: [bookingId], references: [id])
+  participants         TournamentMatchParticipant[]
+}
+
+model TournamentMatchParticipant {
+  id                      String                 @id @default(cuid())
+  matchId                 String
+  tournamentParticipantId String
+  position                Int
+  seed                    Int?
+  teamName                String?
+  createdAt               DateTime               @default(now())
+  updatedAt               DateTime               @updatedAt
+  match                   TournamentMatch        @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  participant             TournamentParticipant  @relation(fields: [tournamentParticipantId], references: [id])
+}
+
+model UserClub {
+  id               String    @id @default(cuid())
+  userId           String
+  clubId           String
+  relationshipType String
+  specialties      String[]
+  hourlyRate       Decimal?
+  bio              String?
+  experience       String?
+  certifications   String?
+  isActive         Boolean   @default(true)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  deletedAt        DateTime?
+  club             Club      @relation(fields: [clubId], references: [id])
+  user             User      @relation(fields: [userId], references: [id])
+
+  @@unique([userId, clubId])
+}
+
+model Notification {
+  id           String      @id @default(cuid())
+  userId       String
+  type         String
+  channel      String
+  title        String
+  message      String
+  data         Json?
+  sentAt       DateTime?
+  scheduledFor DateTime?
+  status       String
+  tournamentId String?
+  bookingId    String?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  booking      Booking?    @relation(fields: [bookingId], references: [id])
+  tournament   Tournament? @relation(fields: [tournamentId], references: [id])
+  user         User        @relation(fields: [userId], references: [id])
+}
+
+model NotificationPreferences {
+  id                    String   @id @default(cuid())
+  userId                String   @unique
+  emailEnabled          Boolean  @default(true)
+  whatsappEnabled       Boolean  @default(true)
+  matchReminders        Boolean  @default(true)
+  matchResults          Boolean  @default(true)
+  tournamentUpdates     Boolean  @default(true)
+  tournamentStarting    Boolean  @default(true)
+  bookingConfirmations  Boolean  @default(true)
+  bookingCancellations  Boolean  @default(true)
+  reminderMinutesBefore Int      @default(60)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  user                  User     @relation(fields: [userId], references: [id])
 }

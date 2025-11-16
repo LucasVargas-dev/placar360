@@ -2,8 +2,8 @@ import { z } from 'zod';
 
 // Create RolePermission Schema
 export const CreateRolePermissionSchema = z.object({
-  roleId: z.number().int().positive('Role ID must be a positive integer'),
-  permissionId: z.number().int().positive('Permission ID must be a positive integer'),
+  roleId: z.number().int(),
+  permissionId: z.number().int(),
 });
 
 export const RolePermissionResponseSchema = z.object({

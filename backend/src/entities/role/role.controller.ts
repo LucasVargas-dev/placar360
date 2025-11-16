@@ -1,64 +1,59 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Delete,
-  ParseIntPipe,
-} from '@nestjs/common';
+import { Controller, Get, Param, Patch, Body } from '@nestjs/common';
 import { RoleService } from './role.service';
-import { CreateRoleDto, UpdateRoleDto, AssignPermissionsDto, CreateRoleSchema, UpdateRoleSchema, AssignPermissionsSchema } from './role.model';
-import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
+import { CreateRoleSchema, UpdateRoleSchema, AssignPermissionsSchema, CreateRoleDto, UpdateRoleDto, AssignPermissionsDto } from './role.model';
+import DefaultController from '../../../packages/default.controller.js';
+import { RoleEntity } from './role.orm.js';
+import { ZodSchema } from 'zod';
+import { ZodValidationPipe } from '../../../packages/common/pipes/zod-validation.pipe';
 
 @Controller('roles')
-export class RoleController {
-  constructor(private readonly roleService: RoleService) {}
+export class RoleController extends DefaultController<
+	RoleEntity,
+	CreateRoleDto,
+	UpdateRoleDto
+> {
+	constructor(private readonly roleService: RoleService) {
+		super(roleService);
+	}
 
-  @Post()
-  create(@Body(new ZodValidationPipe(CreateRoleSchema)) createRoleDto: CreateRoleDto) {
-    return this.roleService.create(createRoleDto);
-  }
+	/**
+	 * Custom endpoint to get role by name
+	 */
+	@Get('name/:name')
+	async findByName(@Param('name') name: string) {
+		return await this.roleService.findByName(name);
+	}
 
-  @Get()
-  findAll() {
-    return this.roleService.findAll();
-  }
+	/**
+	 * Custom endpoint to get permissions for a role
+	 */
+	@Get(':id/permissions')
+	async getPermissions(@Param('id') id: string) {
+		return await this.roleService.getPermissions(Number(id));
+	}
 
-  @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.roleService.findOne(id);
-  }
+	/**
+	 * Custom endpoint to assign permissions to a role
+	 */
+	@Patch(':id/permissions')
+	async assignPermissions(
+		@Param('id') id: string,
+		@Body(new ZodValidationPipe(AssignPermissionsSchema)) assignPermissionsDto: AssignPermissionsDto,
+	) {
+		return await this.roleService.assignPermissions(Number(id), assignPermissionsDto);
+	}
 
-  @Get('name/:name')
-  findByName(@Param('name') name: string) {
-    return this.roleService.findByName(name);
-  }
+	/**
+	 * The zod create schema
+	 */
+	protected createSchema(): ZodSchema {
+		return CreateRoleSchema;
+	}
 
-  @Get(':id/permissions')
-  getPermissions(@Param('id', ParseIntPipe) id: number) {
-    return this.roleService.getPermissions(id);
-  }
-
-  @Patch(':id')
-  update(
-    @Param('id', ParseIntPipe) id: number,
-    @Body(new ZodValidationPipe(UpdateRoleSchema)) updateRoleDto: UpdateRoleDto,
-  ) {
-    return this.roleService.update(id, updateRoleDto);
-  }
-
-  @Patch(':id/permissions')
-  assignPermissions(
-    @Param('id', ParseIntPipe) id: number,
-    @Body(new ZodValidationPipe(AssignPermissionsSchema)) assignPermissionsDto: AssignPermissionsDto,
-  ) {
-    return this.roleService.assignPermissions(id, assignPermissionsDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id', ParseIntPipe) id: number) {
-    return this.roleService.remove(id);
-  }
+	/**
+	 * The zod update schema
+	 */
+	protected updateSchema(): ZodSchema {
+		return UpdateRoleSchema;
+	}
 }

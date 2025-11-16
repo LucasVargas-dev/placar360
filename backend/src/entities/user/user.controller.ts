@@ -1,58 +1,50 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Delete,
-} from '@nestjs/common';
+import { Controller, Get, Param, Patch, Body } from '@nestjs/common';
 import { UserService } from './user.service';
-import { CreateUserDto, UpdateUserDto, CreateUserSchema, UpdateUserSchema } from './user.model';
-import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
+import { CreateUserSchema, UpdateUserSchema, CreateUserDto, UpdateUserDto } from './user.model';
+import DefaultController from '../../../packages/default.controller.js';
+import { UserEntity } from './user.orm.js';
+import { ZodSchema } from 'zod';
 
 @Controller('users')
-export class UserController {
-  constructor(private readonly userService: UserService) {}
+export class UserController extends DefaultController<
+	UserEntity,
+	CreateUserDto,
+	UpdateUserDto
+> {
+	constructor(private readonly userService: UserService) {
+		super(userService);
+	}
 
-  @Post()
-  create(@Body(new ZodValidationPipe(CreateUserSchema)) createUserDto: CreateUserDto) {
-    return this.userService.create(createUserDto);
-  }
+	/**
+	 * Custom endpoint to get user by email
+	 */
+	@Get('email/:email')
+	async findByEmail(@Param('email') email: string) {
+		return await this.userService.findByEmail(email);
+	}
 
-  @Get()
-  findAll() {
-    return this.userService.findAll();
-  }
+	/**
+	 * Custom endpoint to change user password
+	 */
+	@Patch(':id/password')
+	async changePassword(
+		@Param('id') id: string,
+		@Body() body: { password: string },
+	) {
+		return await this.userService.changePassword(id, body.password);
+	}
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.userService.findOne(id);
-  }
+	/**
+	 * The zod create schema
+	 */
+	protected createSchema(): ZodSchema {
+		return CreateUserSchema;
+	}
 
-  @Get('email/:email')
-  findByEmail(@Param('email') email: string) {
-    return this.userService.findByEmail(email);
-  }
-
-  @Patch(':id')
-  update(
-    @Param('id') id: string,
-    @Body(new ZodValidationPipe(UpdateUserSchema)) updateUserDto: UpdateUserDto,
-  ) {
-    return this.userService.update(id, updateUserDto);
-  }
-
-  @Patch(':id/password')
-  changePassword(
-    @Param('id') id: string,
-    @Body() body: { password: string },
-  ) {
-    return this.userService.changePassword(id, body.password);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.userService.remove(id);
-  }
+	/**
+	 * The zod update schema
+	 */
+	protected updateSchema(): ZodSchema {
+		return UpdateUserSchema;
+	}
 }

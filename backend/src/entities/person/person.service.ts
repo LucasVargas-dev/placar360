@@ -1,66 +1,40 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
+import DefaultService from '../../../packages/default.service.js';
+import { PersonEntity, PersonORM } from './person.orm.js';
 import { CreatePersonDto, UpdatePersonDto } from './person.model';
+import { PersonQueryService } from './person.query.service.js';
 
 @Injectable()
-export class PersonService {
-  constructor(private prisma: PrismaService) {}
+export class PersonService extends DefaultService<
+	PersonEntity,
+	CreatePersonDto,
+	UpdatePersonDto
+> {
+	constructor(
+		orm: PersonORM,
+		queryService: PersonQueryService
+	) {
+		super(orm, queryService);
+	}
 
-  async create(createPersonDto: CreatePersonDto) {
-    return this.prisma.person.create({
-      data: {
-        name: createPersonDto.name,
-      },
-    });
-  }
+	/**
+	 * Validates if the data is valid for the person
+	 */
+	protected async validateEntity(
+		data: CreatePersonDto | UpdatePersonDto,
+		id?: number | string
+	): Promise<void> {
+		// No specific validation needed for person
+	}
 
-  async findAll() {
-    return this.prisma.person.findMany({
-      where: {
-        deletedAt: null,
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
-  }
+	/**
+	 * Validates if the id is valid for the person
+	 */
+	protected async validateId(id: number | string): Promise<void> {
+		const personExists = await this.show(id);
 
-  async findOne(id: number) {
-    const person = await this.prisma.person.findUnique({
-      where: { id },
-      include: {
-        user: true,
-      },
-    });
-
-    if (!person || person.deletedAt) {
-      throw new NotFoundException(`Person with ID ${id} not found`);
-    }
-
-    return person;
-  }
-
-  async update(id: number, updatePersonDto: UpdatePersonDto) {
-    const person = await this.findOne(id);
-    
-    return this.prisma.person.update({
-      where: { id },
-      data: {
-        ...updatePersonDto,
-        updatedAt: new Date(),
-      },
-    });
-  }
-
-  async remove(id: number) {
-    const person = await this.findOne(id);
-    
-    return this.prisma.person.update({
-      where: { id },
-      data: {
-        deletedAt: new Date(),
-        updatedAt: new Date(),
-      },
-    });
-  }
+		if (!personExists) {
+			throw new NotFoundException(`Person with ID ${id} not found`);
+		}
+	}
 }

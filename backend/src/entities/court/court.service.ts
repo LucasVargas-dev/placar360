@@ -1,169 +1,86 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
+import { Injectable, NotFoundException, ConflictException, Inject } from '@nestjs/common';
+import DefaultService from '../../../packages/default.service.js';
+import { CourtEntity, CourtORM } from './court.orm.js';
 import { CreateCourtDto, UpdateCourtDto } from './court.model';
+import { CourtQueryService } from './court.query.service.js';
+import { PrismaService } from '../../prisma/prisma.service.js';
 
 @Injectable()
-export class CourtService {
-  constructor(private prisma: PrismaService) {}
+export class CourtService extends DefaultService<
+	CourtEntity,
+	CreateCourtDto,
+	UpdateCourtDto
+> {
+	constructor(
+		orm: CourtORM,
+		queryService: CourtQueryService,
+		@Inject(PrismaService) private readonly prisma: PrismaService
+	) {
+		super(orm, queryService);
+	}
 
-  async create(createCourtDto: CreateCourtDto) {
-    // Check if club exists
-    const club = await this.prisma.club.findUnique({
-      where: { id: createCourtDto.clubId },
-    });
+	/**
+	 * Validate if club exists
+	 */
+	private async validateClubExists(clubId: string): Promise<void> {
+		const club = await this.prisma.club.findUnique({
+			where: { id: clubId, deletedAt: null },
+		});
 
-    if (!club || club.deletedAt) {
-      throw new NotFoundException(`Club with ID ${createCourtDto.clubId} not found`);
-    }
+		if (!club) {
+			throw new NotFoundException(`Club with ID ${clubId} not found`);
+		}
+	}
 
-    // Check if court name already exists in the same club
-    const existingCourt = await this.prisma.court.findFirst({
-      where: { 
-        clubId: createCourtDto.clubId,
-        name: createCourtDto.name,
-        deletedAt: null,
-      },
-    });
+	/**
+	 * Validate if court name is unique within a club
+	 */
+	private async validateCourtNameUnique(clubId: string, name: string, excludeId?: string): Promise<void> {
+		const existingCourt = await this.queryService.getByConditions({
+			where: {
+				clubId,
+				name,
+				...(excludeId && { NOT: { id: excludeId } } as any),
+			} as any,
+		});
 
-    if (existingCourt) {
-      throw new ConflictException('Court name already exists in this club');
-    }
+		if (existingCourt) {
+			throw new ConflictException('Court name already exists in this club');
+		}
+	}
 
-    return this.prisma.court.create({
-      data: {
-        clubId: createCourtDto.clubId,
-        name: createCourtDto.name,
-        sportType: createCourtDto.sportType ?? 'padel',
-        surface: createCourtDto.surface,
-        defaultSlotMinutes: createCourtDto.defaultSlotMinutes ?? 60,
-        hourlyRate: createCourtDto.hourlyRate,
-        isActive: createCourtDto.isActive ?? true,
-      },
-      include: {
-        club: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-      },
-    });
-  }
+	/**
+	 * Validates if the data is valid for the court
+	 */
+	protected async validateEntity(
+		data: CreateCourtDto | UpdateCourtDto,
+		id?: string
+	): Promise<void> {
+		// Validate club exists if clubId is provided
+		if ('clubId' in data && data.clubId) {
+			await this.validateClubExists(data.clubId);
+		}
 
-  async findAll() {
-    return this.prisma.court.findMany({
-      where: {
-        deletedAt: null,
-      },
-      include: {
-        club: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-      },
-      orderBy: [
-        { club: { name: 'asc' } },
-        { name: 'asc' },
-      ],
-    });
-  }
+		// If creating or updating name, validate uniqueness
+		if (data.name) {
+			const clubId = 'clubId' in data && data.clubId 
+				? data.clubId 
+				: id ? (await this.show(id))?.clubId : undefined;
 
-  async findOne(id: string) {
-    const court = await this.prisma.court.findUnique({
-      where: { id },
-      include: {
-        club: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-      },
-    });
+			if (clubId) {
+				await this.validateCourtNameUnique(clubId, data.name, id);
+			}
+		}
+	}
 
-    if (!court || court.deletedAt) {
-      throw new NotFoundException(`Court with ID ${id} not found`);
-    }
+	/**
+	 * Validates if the id is valid for the court
+	 */
+	protected async validateId(id: string): Promise<void> {
+		const courtExists = await this.show(id);
 
-    return court;
-  }
-
-  async findByClub(clubId: string) {
-    // Check if club exists
-    const club = await this.prisma.club.findUnique({
-      where: { id: clubId },
-    });
-
-    if (!club || club.deletedAt) {
-      throw new NotFoundException(`Club with ID ${clubId} not found`);
-    }
-
-    return this.prisma.court.findMany({
-      where: {
-        clubId,
-        deletedAt: null,
-      },
-      include: {
-        club: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-      },
-      orderBy: {
-        name: 'asc',
-      },
-    });
-  }
-
-  async update(id: string, updateCourtDto: UpdateCourtDto) {
-    const court = await this.findOne(id);
-    
-    // Check if name is being updated and if it already exists in the same club
-    if (updateCourtDto.name && updateCourtDto.name !== court.name) {
-      const existingCourt = await this.prisma.court.findFirst({
-        where: { 
-          clubId: court.clubId,
-          name: updateCourtDto.name,
-          deletedAt: null,
-          NOT: { id },
-        },
-      });
-
-      if (existingCourt) {
-        throw new ConflictException('Court name already exists in this club');
-      }
-    }
-    
-    return this.prisma.court.update({
-      where: { id },
-      data: {
-        ...updateCourtDto,
-        updatedAt: new Date(),
-      },
-      include: {
-        club: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-      },
-    });
-  }
-
-  async remove(id: string) {
-    const court = await this.findOne(id);
-    
-    return this.prisma.court.update({
-      where: { id },
-      data: {
-        deletedAt: new Date(),
-        updatedAt: new Date(),
-      },
-    });
-  }
+		if (!courtExists) {
+			throw new NotFoundException(`Court with ID ${id} not found`);
+		}
+	}
 }

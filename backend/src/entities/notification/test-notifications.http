@@ -1,0 +1,347 @@
+### 🧪 Notification System Testing Guide
+### Make sure your backend is running on http://localhost:3000
+### 
+### 📝 SETUP: First run the testing seeder to create test data:
+### npm run prisma:seed-testing
+###
+### This will create:
+### - 5 test users (ADMIN001, MANAGER001, PLAYER001-003)
+### - 5 test clubs with courts
+### - 5 test tournaments
+### - 13 test bookings
+### - 10 test notifications
+###
+### ============================================
+### 1. GET TEST DATA - Get IDs for testing
+### ============================================
+
+### Get all users (find ADMIN001, MANAGER001, PLAYER001-003)
+GET http://localhost:3000/users
+
+### Get all clubs (find Tennis Club São Paulo, etc.)
+GET http://localhost:3000/clubs
+
+### Get all courts (find Quadra Central, etc.)
+GET http://localhost:3000/courts
+
+### Get all tournaments (find Copa São Paulo de Tênis 2024, etc.)
+GET http://localhost:3000/tournaments
+
+### Get all bookings (find tournament and regular bookings)
+GET http://localhost:3000/bookings
+
+### Get all notifications (see existing test notifications)
+GET http://localhost:3000/notifications
+
+### ============================================
+### 2. BASIC NOTIFICATION CRUD TESTS
+### ============================================
+
+### Create a basic notification
+### Replace {{userId}} with actual user ID from the GET /users response
+POST http://localhost:3000/notifications
+Content-Type: application/json
+
+{
+  "userId": "cmh9tni400003a48bg64wf6hc",
+  "type": "BOOKING_CONFIRMATION",
+  "channel": "BOTH",
+  "title": "Test Notification",
+  "message": "This is a test notification message",
+  "data": {
+    "testKey": "testValue"
+  }
+}
+
+### Get all notifications (should show existing test notifications)
+GET http://localhost:3000/notifications
+
+### ============================================
+### 3. SPECIFIC NOTIFICATION TYPE TESTS
+### ============================================
+
+### Test Booking Confirmation Notification
+### Replace {{userId}} and {{bookingId}} with actual IDs from GET responses
+POST http://localhost:3000/notifications/booking-confirmation
+Content-Type: application/json
+
+{
+  "userId": "{{userId}}",
+  "bookingId": "{{bookingId}}",
+  "courtName": "Quadra Central",
+  "startTime": "2024-12-15T09:00:00Z",
+  "endTime": "2024-12-15T10:30:00Z",
+  "totalAmount": 150.00,
+  "channel": "BOTH"
+}
+
+### Test Match Reminder Notification
+### Replace {{userId}} and {{bookingId}} with actual IDs
+POST http://localhost:3000/notifications/match-reminder
+Content-Type: application/json
+
+{
+  "userId": "{{userId}}",
+  "bookingId": "{{bookingId}}",
+  "courtName": "Quadra Central",
+  "startTime": "2024-12-15T09:00:00Z",
+  "endTime": "2024-12-15T10:30:00Z",
+  "opponentName": "João Silva",
+  "tournamentName": "Copa São Paulo de Tênis 2024",
+  "channel": "BOTH"
+}
+
+### Test Match Result Notification
+### Replace {{userId}} and {{bookingId}} with actual IDs
+POST http://localhost:3000/notifications/match-result
+Content-Type: application/json
+
+{
+  "userId": "{{userId}}",
+  "bookingId": "{{bookingId}}",
+  "courtName": "Quadra Central",
+  "startTime": "2024-12-15T09:00:00Z",
+  "endTime": "2024-12-15T10:30:00Z",
+  "result": "Vitória",
+  "score": "6-4, 6-2",
+  "tournamentName": "Copa São Paulo de Tênis 2024",
+  "channel": "BOTH"
+}
+
+### Test Tournament Update Notification
+### Replace {{userId}} and {{tournamentId}} with actual IDs
+POST http://localhost:3000/notifications/tournament-update
+Content-Type: application/json
+
+{
+  "userId": "{{userId}}",
+  "tournamentId": "{{tournamentId}}",
+  "tournamentName": "Copa São Paulo de Tênis 2024",
+  "updateType": "REGISTRATION_OPEN",
+  "message": "As inscrições para o Copa São Paulo de Tênis 2024 estão abertas!",
+  "channel": "BOTH"
+}
+
+### Test Tournament Starting Notification
+### Replace {{userId}} and {{tournamentId}} with actual IDs
+POST http://localhost:3000/notifications/tournament-starting
+Content-Type: application/json
+
+{
+  "userId": "{{userId}}",
+  "tournamentId": "{{tournamentId}}",
+  "tournamentName": "Copa São Paulo de Tênis 2024",
+  "startDate": "2024-12-15T09:00:00Z",
+  "location": "Tennis Club São Paulo",
+  "channel": "BOTH"
+}
+
+### ============================================
+### 4. NOTIFICATION PREFERENCES TESTS
+### ============================================
+
+### Create notification preferences
+### Replace {{userId}} with actual user ID
+POST http://localhost:3000/notifications/preferences
+Content-Type: application/json
+
+{
+  "userId": "{{userId}}",
+  "emailEnabled": true,
+  "whatsappEnabled": true,
+  "matchReminders": true,
+  "matchResults": true,
+  "tournamentUpdates": true,
+  "tournamentStarting": true,
+  "bookingConfirmations": true,
+  "bookingCancellations": true,
+  "reminderMinutesBefore": 60
+}
+
+### Get notification preferences
+GET http://localhost:3000/notifications/preferences
+
+### Update notification preferences
+PUT http://localhost:3000/notifications/preferences
+Content-Type: application/json
+
+{
+  "emailEnabled": false,
+  "whatsappEnabled": true,
+  "reminderMinutesBefore": 30
+}
+
+### ============================================
+### 5. ERROR HANDLING TESTS
+### ============================================
+
+### Test with invalid user ID (should return 404)
+POST http://localhost:3000/notifications/booking-confirmation
+Content-Type: application/json
+
+{
+  "userId": "invalid-user-id",
+  "bookingId": "{{bookingId}}",
+  "courtName": "Quadra Central",
+  "startTime": "2024-12-15T09:00:00Z",
+  "endTime": "2024-12-15T10:30:00Z",
+  "channel": "BOTH"
+}
+
+### Test with invalid booking ID (should return 404)
+POST http://localhost:3000/notifications/booking-confirmation
+Content-Type: application/json
+
+{
+  "userId": "{{userId}}",
+  "bookingId": "invalid-booking-id",
+  "courtName": "Quadra Central",
+  "startTime": "2024-12-15T09:00:00Z",
+  "endTime": "2024-12-15T10:30:00Z",
+  "channel": "BOTH"
+}
+
+### Test with invalid tournament ID (should return 404)
+POST http://localhost:3000/notifications/tournament-update
+Content-Type: application/json
+
+{
+  "userId": "{{userId}}",
+  "tournamentId": "invalid-tournament-id",
+  "tournamentName": "Copa São Paulo de Tênis 2024",
+  "updateType": "REGISTRATION_OPEN",
+  "message": "Test message",
+  "channel": "BOTH"
+}
+
+### ============================================
+### 6. VALIDATION TESTS
+### ============================================
+
+### Test with missing required fields
+POST http://localhost:3000/notifications
+Content-Type: application/json
+
+{
+  "userId": "{{userId}}",
+  "type": "BOOKING_CONFIRMATION"
+  // Missing required fields: channel, title, message
+}
+
+### Test with invalid notification type
+POST http://localhost:3000/notifications
+Content-Type: application/json
+
+{
+  "userId": "{{userId}}",
+  "type": "INVALID_TYPE",
+  "channel": "BOTH",
+  "title": "Test",
+  "message": "Test message"
+}
+
+### Test with invalid channel
+POST http://localhost:3000/notifications
+Content-Type: application/json
+
+{
+  "userId": "{{userId}}",
+  "type": "BOOKING_CONFIRMATION",
+  "channel": "INVALID_CHANNEL",
+  "title": "Test",
+  "message": "Test message"
+}
+
+### ============================================
+### 7. INTEGRATION TESTS
+### ============================================
+
+### Test tournament creation with automatic notifications
+### Replace {{clubId}} and {{userId}} with actual IDs
+POST http://localhost:3000/tournaments
+Content-Type: application/json
+
+{
+  "clubId": "{{clubId}}",
+  "organizerId": "{{userId}}",
+  "name": "Integration Test Tournament",
+  "description": "Tournament to test automatic notifications",
+  "sportType": "TENNIS",
+  "startDate": "2024-12-20T10:00:00Z",
+  "endDate": "2024-12-22T18:00:00Z",
+  "registrationStart": "2024-11-20T00:00:00Z",
+  "registrationEnd": "2024-12-15T23:59:59Z",
+  "maxParticipants": 16,
+  "status": "PLANNING",
+  "prizes": "Championship trophy",
+  "isActive": true
+}
+
+### Update tournament status to trigger notifications
+### Replace {{tournamentId}} with actual tournament ID
+PATCH http://localhost:3000/tournaments/{{tournamentId}}
+Content-Type: application/json
+
+{
+  "status": "REGISTRATION_OPEN"
+}
+
+### ============================================
+### 8. PERFORMANCE TESTS
+### ============================================
+
+### Test bulk notification creation (run this multiple times)
+POST http://localhost:3000/notifications/booking-confirmation
+Content-Type: application/json
+
+{
+  "userId": "{{userId}}",
+  "bookingId": "{{bookingId}}",
+  "courtName": "Court 1",
+  "startTime": "2024-12-01T14:00:00Z",
+  "endTime": "2024-12-01T15:00:00Z",
+  "channel": "BOTH"
+}
+
+### ============================================
+### 9. CLEANUP TESTS
+### ============================================
+
+### Delete a notification (you'll need the notification ID)
+DELETE http://localhost:3000/notifications/{{notificationId}}
+
+### Update notification status
+PATCH http://localhost:3000/notifications/{{notificationId}}
+Content-Type: application/json
+
+{
+  "status": "SENT"
+}
+
+### ============================================
+### 📝 TESTING INSTRUCTIONS:
+### 
+### 1. SETUP:
+###    - Run: npm run prisma:seed-testing
+###    - Start backend: npm run dev
+### 
+### 2. GET TEST DATA:
+###    - Run the GET requests in section 1 to get actual IDs
+###    - Copy the IDs from responses and replace {{userId}}, {{clubId}}, etc.
+### 
+### 3. TEST NOTIFICATIONS:
+###    - Run the notification creation requests
+###    - Check responses for success/error messages
+###    - Verify notifications are created in database
+### 
+### 4. MONITOR:
+###    - Watch console logs for notification processing
+###    - Check database for created notifications
+###    - Test error scenarios with invalid IDs
+### 
+### 5. EXPECTED RESULTS:
+###    - All valid requests should return 201/200 status
+###    - Invalid requests should return 404/400 status
+###    - Notifications should be created in database
+###    - Console should show processing logs
+### ============================================

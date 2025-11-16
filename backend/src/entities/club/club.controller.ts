@@ -1,50 +1,43 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Delete,
-} from '@nestjs/common';
+import { Controller, Get, Param } from '@nestjs/common';
 import { ClubService } from './club.service';
-import { CreateClubDto, UpdateClubDto, CreateClubSchema, UpdateClubSchema } from './club.model';
-import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
+import { CreateClubSchema, UpdateClubSchema, CreateClubDto, UpdateClubDto } from './club.model';
+import DefaultController from '../../../packages/default.controller.js';
+import { ClubEntity } from './club.orm.js';
+import { ZodSchema } from 'zod';
 
 @Controller('clubs')
-export class ClubController {
-  constructor(private readonly clubService: ClubService) {}
+export class ClubController extends DefaultController<
+	ClubEntity,
+	CreateClubDto,
+	UpdateClubDto
+> {
+	constructor(private readonly clubService: ClubService) {
+		super(clubService);
+	}
 
-  @Post()
-  create(@Body(new ZodValidationPipe(CreateClubSchema)) createClubDto: CreateClubDto) {
-    return this.clubService.create(createClubDto);
-  }
+	/**
+	 * Custom endpoint to get courts for a specific club
+	 */
+	@Get(':id/courts')
+	async getCourts(@Param('id') id: string) {
+		const club = await this.service.show(id);
+		if (!club) {
+			throw new Error('Club not found');
+		}
+		return club;
+	}
 
-  @Get()
-  findAll() {
-    return this.clubService.findAll();
-  }
+	/**
+	 * The zod create schema
+	 */
+	protected createSchema(): ZodSchema {
+		return CreateClubSchema;
+	}
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.clubService.findOne(id);
-  }
-
-  @Get(':id/courts')
-  getCourts(@Param('id') id: string) {
-    return this.clubService.getCourts(id);
-  }
-
-  @Patch(':id')
-  update(
-    @Param('id') id: string,
-    @Body(new ZodValidationPipe(UpdateClubSchema)) updateClubDto: UpdateClubDto,
-  ) {
-    return this.clubService.update(id, updateClubDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.clubService.remove(id);
-  }
+	/**
+	 * The zod update schema
+	 */
+	protected updateSchema(): ZodSchema {
+		return UpdateClubSchema;
+	}
 }

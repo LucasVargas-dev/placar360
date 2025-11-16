@@ -182,6 +182,6 @@ export class PermissionService {
 
   async getRoles(id: number) {
     const permission = await this.findOne(id);
-    return permission.roles.map(rp => rp.role);
+    return permission.roles.map(permissionRoles => permissionRoles.role);
   }
 }

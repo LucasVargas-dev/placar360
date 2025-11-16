@@ -1,29 +1,35 @@
-import axios from 'axios'
+import axios, { isAxiosError } from 'axios';
 
 export const api = axios.create({
-  baseURL: '/api', // Vite proxy vai redirecionar para o backend
-  headers: {
-    'Content-Type': 'application/json',
-  },
-})
+	baseURL: '/api', // Vite proxy vai redirecionar para o backend
+	headers: {
+		'Content-Type': 'application/json',
+	},
+});
 
 // Interceptor para adicionar token automaticamente
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token')
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`
-  }
-  return config
-})
+	const token = localStorage.getItem('token');
+
+	if (token != null) {
+		config.headers.Authorization = `Bearer ${token}`;
+	}
+
+	return config;
+});
 
 // Interceptor para tratar erros de resposta
 api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem('token')
-      window.location.href = '/login'
-    }
-    return Promise.reject(error)
-  }
-)
+	(config) => config,
+	(error) => {
+		if (
+			isAxiosError(error) &&
+			error.response?.status === 401 &&
+			window.location.pathname !== '/login'
+		) {
+			localStorage.removeItem('token');
+			window.location.href = '/login';
+		}
+		throw error;
+	}
+);

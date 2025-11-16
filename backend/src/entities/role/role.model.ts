@@ -2,15 +2,15 @@ import { z } from 'zod';
 
 // Create Role Schema
 export const CreateRoleSchema = z.object({
-  name: z.string().min(1, 'Role name is required').max(45, 'Role name must be less than 45 characters'),
+  name: z.string(),
 });
 
 export const UpdateRoleSchema = z.object({
-  name: z.string().min(1, 'Role name is required').max(45, 'Role name must be less than 45 characters').optional(),
+  name: z.string().optional(),
 });
 
 export const AssignPermissionsSchema = z.object({
-  permissionIds: z.array(z.number().int().positive()).min(1, 'At least one permission must be assigned'),
+  permissionIds: z.array(z.number().int().positive()),
 });
 
 export const RoleResponseSchema = z.object({
